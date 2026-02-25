@@ -1,0 +1,35 @@
+version: "3.8"
+
+services:
+  mongo1:
+    image: mongo:7
+    container_name: vaultgo-mongo
+    command: ["mongod", "--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: echo "try { rs.status() } catch (err) { rs.initiate({_id:'rs0',members:[{_id:0,host:'localhost:27017'}]}) }" | mongosh --port 27017 --quiet
+      interval: 5s
+      timeout: 30s
+      start_period: 0s
+      retries: 30
+
+  vaultgo:
+    build: .
+    container_name: vaultgo-app
+    ports:
+      - "8080:8080"
+    environment:
+      MONGO_URI: "mongodb://mongo1:27017/?replicaSet=rs0&directConnection=true"
+      DB_NAME: "vaultgo"
+      PORT: "8080"
+    depends_on:
+      mongo1:
+        condition: service_healthy
+    restart: on-failure
+
+volumes:
+  mongo-data:
+

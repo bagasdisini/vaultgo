@@ -1,0 +1,373 @@
+definitions:
+  dto.AmountRequest:
+    properties:
+      amount:
+        type: string
+    required:
+    - amount
+    type: object
+  dto.CreateWalletRequest:
+    properties:
+      currency:
+        type: string
+      owner_id:
+        type: string
+    required:
+    - currency
+    - owner_id
+    type: object
+  dto.LedgerEntryResponse:
+    properties:
+      amount:
+        type: string
+      balance_after:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      entry_id:
+        type: string
+      idempotency_key:
+        type: string
+      type:
+        type: string
+      wallet_id:
+        type: string
+    type: object
+  dto.Response:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: string
+    type: object
+  dto.TransferRequest:
+    properties:
+      amount:
+        type: string
+      from_wallet_id:
+        type: string
+      to_wallet_id:
+        type: string
+    required:
+    - amount
+    - from_wallet_id
+    - to_wallet_id
+    type: object
+  dto.WalletResponse:
+    properties:
+      balance:
+        type: string
+      created_at:
+        type: string
+      currency:
+        type: string
+      owner_id:
+        type: string
+      status:
+        type: string
+      updated_at:
+        type: string
+      wallet_id:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: Backend VaultGo API Documentation
+  title: Backend VaultGo API
+  version: 0.1.0
+paths:
+  /wallets:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a list of all wallets in the system
+      operationId: get-all-wallets
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.WalletResponse'
+                  type: array
+              type: object
+      summary: Get all wallets
+      tags:
+      - Wallet
+    post:
+      consumes:
+      - application/json
+      description: Create a wallet for a specific owner and currency
+      operationId: create-wallet
+      parameters:
+      - description: Wallet creation details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Create a new wallet
+      tags:
+      - Wallet
+  /wallets/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve wallet information by Wallet ID
+      operationId: get-wallet
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Get wallet details
+      tags:
+      - Wallet
+  /wallets/{id}/ledger:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all ledger entries for a given wallet ID, ordered by creation
+        time
+      operationId: get-ledger
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.LedgerEntryResponse'
+                  type: array
+              type: object
+      summary: Get ledger entries for a wallet
+      tags:
+      - Ledger
+  /wallets/{id}/pay:
+    post:
+      consumes:
+      - application/json
+      description: Deduct funds from a wallet by ID
+      operationId: pay-wallet
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Amount to pay
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AmountRequest'
+      - description: Idempotency Key for ensuring idempotent requests
+        in: header
+        name: Idempotency-Key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Pay from wallet
+      tags:
+      - Wallet
+  /wallets/{id}/suspend:
+    post:
+      consumes:
+      - application/json
+      description: Suspend a wallet by ID, preventing any transactions until reactivated
+      operationId: suspend-wallet
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Suspend a wallet
+      tags:
+      - Wallet
+  /wallets/{id}/topup:
+    post:
+      consumes:
+      - application/json
+      description: Add funds to a wallet by ID
+      operationId: topup-wallet
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Amount to top up
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AmountRequest'
+      - description: Idempotency Key for ensuring idempotent requests
+        in: header
+        name: Idempotency-Key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Top up wallet balance
+      tags:
+      - Wallet
+  /wallets/{id}/unsuspend:
+    post:
+      consumes:
+      - application/json
+      description: Reactivate a suspended wallet by ID, allowing transactions to resume
+      operationId: unsuspend-wallet
+      parameters:
+      - description: Wallet ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.WalletResponse'
+              type: object
+      summary: Unsuspend a wallet
+      tags:
+      - Wallet
+  /wallets/owner/{owner_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all wallets associated with a specific owner ID
+      operationId: get-wallets-by-owner
+      parameters:
+      - description: Owner ID
+        in: path
+        name: owner_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/dto.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.WalletResponse'
+                  type: array
+              type: object
+      summary: Get wallets by owner
+      tags:
+      - Wallet
+  /wallets/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Transfer a specified amount from one wallet to another
+      operationId: transfer-wallet
+      parameters:
+      - description: Transfer details
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TransferRequest'
+      - description: Idempotency Key for ensuring idempotent requests
+        in: header
+        name: Idempotency-Key
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response'
+      summary: Transfer funds between wallets
+      tags:
+      - Wallet
+swagger: "2.0"
